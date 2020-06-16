@@ -11,7 +11,8 @@ declare(strict_types=1);
 namespace Serafim\Pipe;
 
 /**
- * Trait OperatorsTrait
+ * @mixin Pipe
+ * @mixin PipeInterface
  */
 trait OperatorsTrait
 {
@@ -232,6 +233,39 @@ trait OperatorsTrait
     {
         $self = clone $this;
         $self->value = eval($this->applyArgument($code));
+
+        return $self;
+    }
+
+    /**
+     * <code>
+     *  pipe(true)
+     *      ->if(_, fn(): int => 23)
+     *      ->var_dump // int(23)
+     *  ;
+     *
+     *  pipe(false)
+     *      ->if(_, fn(): int => 23)
+     *      ->var_dump // bool(false)
+     *  ;
+     *
+     *  pipe(42)
+     *      ->if(true, fn($ctx) => $ctx->var_dump) // int(42)
+     *  ;
+     * </code>
+     *
+     * @param mixed $expr
+     * @param \Closure $then
+     * @return self|$this
+     */
+    public function if($expr, \Closure $then): self
+    {
+        /** @var Pipe $self */
+        $self = clone $this;
+
+        if ($this->applyArgument($expr)) {
+            $self = $this->passToClosureAndExtract($self, $then);
+        }
 
         return $self;
     }

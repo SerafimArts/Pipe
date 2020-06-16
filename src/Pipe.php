@@ -175,14 +175,32 @@ final class Pipe implements PipeInterface
 
         if ($context !== null) {
             $self->namespace = $namespace;
-            $new = $context($self);
-
-            if ($new instanceof PipeInterface) {
-                $self->value = $new->value;
-            }
+            $self = $this->passToClosureAndExtract($self, $context);
         }
 
         return $self;
+    }
+
+    /**
+     * @param PipeInterface $ctx
+     * @param \Closure $expr
+     * @return PipeInterface
+     */
+    private function passToClosureAndExtract(PipeInterface $ctx, \Closure $expr): PipeInterface
+    {
+        $new = $expr($ctx);
+
+        switch (true) {
+            case $new instanceof PipeInterface:
+                $ctx->value = $new->value;
+                break;
+
+            case $new !== null:
+                $ctx->value = $new;
+                break;
+        }
+
+        return $ctx;
     }
 
     /**
